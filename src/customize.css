@@ -1,0 +1,9 @@
+.open-bg-img {
+  background: url('./assets/open.jpg') no-repeat center center;
+  background-size: cover;
+}
+
+.fade-bg-img {
+  background: url('./assets/bg-fade.jpg') no-repeat center center;
+  background-size: cover;
+}

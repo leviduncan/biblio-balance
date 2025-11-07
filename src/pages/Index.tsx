@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Hero } from '@/components/Hero';
 import { Card } from '@/components/ui/card';
 import { BookOpen, TrendingUp, Heart, Target } from 'lucide-react';
+import '@/customize.css';
 
 const Index = () => {
   const { user } = useAuth();
