@@ -12,6 +12,10 @@ import MyBooks from "./pages/MyBooks";
 import Discover from "./pages/Discover";
 import CurrentlyReading from "./pages/CurrentlyReading";
 import Profile from "./pages/Profile";
+import WantToRead from "./pages/WantToRead";
+import Completed from "./pages/Completed";
+import Favorites from "./pages/Favorites";
+import ReadingStats from "./pages/ReadingStats";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +35,10 @@ const App = () => (
             <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
             <Route path="/currently-reading" element={<ProtectedRoute><CurrentlyReading /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/want-to-read" element={<ProtectedRoute><WantToRead /></ProtectedRoute>} />
+            <Route path="/completed" element={<ProtectedRoute><Completed /></ProtectedRoute>} />
+            <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+            <Route path="/reading-stats" element={<ProtectedRoute><ReadingStats /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
