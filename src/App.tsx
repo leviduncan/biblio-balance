@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import MyBooks from "./pages/MyBooks";
 import Discover from "./pages/Discover";
 import CurrentlyReading from "./pages/CurrentlyReading";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/my-books" element={<ProtectedRoute><MyBooks /></ProtectedRoute>} />
             <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
             <Route path="/currently-reading" element={<ProtectedRoute><CurrentlyReading /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
