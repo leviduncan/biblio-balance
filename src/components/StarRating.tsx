@@ -35,10 +35,14 @@ export function StarRating({
           key={star}
           className={cn(
             sizeClasses[size],
-            star <= rating ? 'fill-primary text-primary' : 'text-muted-foreground',
-            interactive && 'cursor-pointer hover:scale-110 transition-transform'
+            star <= rating 
+              ? 'fill-primary text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.5)]' 
+              : 'text-muted-foreground',
+            interactive && 'cursor-pointer transition-all duration-200 hover:scale-125 hover:-rotate-12 active:scale-90',
+            interactive && star <= rating && 'animate-bounce-in'
           )}
           onClick={() => handleClick(star)}
+          onMouseEnter={() => interactive && onChange && onChange(star)}
         />
       ))}
     </div>

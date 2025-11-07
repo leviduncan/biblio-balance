@@ -135,24 +135,26 @@ const MyBooks = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-card p-4 rounded-lg shadow-card text-center">
-            <p className="text-2xl font-bold text-primary">{allBooks.length}</p>
+          <div className="bg-card p-4 rounded-lg shadow-card text-center transition-all duration-300 hover:shadow-glow hover:-translate-y-1 animate-slide-up cursor-default group">
+            <p className="text-2xl font-bold bg-gradient-amber-glow bg-clip-text text-transparent animate-gradient-shift bg-[length:200%_200%] transition-transform duration-300 group-hover:scale-110">
+              {allBooks.length}
+            </p>
             <p className="text-sm text-muted-foreground">Total Books</p>
           </div>
-          <div className="bg-card p-4 rounded-lg shadow-card text-center">
-            <p className="text-2xl font-bold text-primary">
+          <div className="bg-card p-4 rounded-lg shadow-card text-center transition-all duration-300 hover:shadow-glow hover:-translate-y-1 animate-slide-up cursor-default group" style={{ animationDelay: '0.05s' }}>
+            <p className="text-2xl font-bold bg-gradient-amber-glow bg-clip-text text-transparent animate-gradient-shift bg-[length:200%_200%] transition-transform duration-300 group-hover:scale-110">
               {allBooks.filter(b => b.status === 'want-to-read').length}
             </p>
             <p className="text-sm text-muted-foreground">Want to Read</p>
           </div>
-          <div className="bg-card p-4 rounded-lg shadow-card text-center">
-            <p className="text-2xl font-bold text-primary">
+          <div className="bg-card p-4 rounded-lg shadow-card text-center transition-all duration-300 hover:shadow-glow hover:-translate-y-1 animate-slide-up cursor-default group" style={{ animationDelay: '0.1s' }}>
+            <p className="text-2xl font-bold bg-gradient-amber-glow bg-clip-text text-transparent animate-gradient-shift bg-[length:200%_200%] transition-transform duration-300 group-hover:scale-110">
               {allBooks.filter(b => b.status === 'currently-reading').length}
             </p>
             <p className="text-sm text-muted-foreground">Reading</p>
           </div>
-          <div className="bg-card p-4 rounded-lg shadow-card text-center">
-            <p className="text-2xl font-bold text-primary">
+          <div className="bg-card p-4 rounded-lg shadow-card text-center transition-all duration-300 hover:shadow-glow hover:-translate-y-1 animate-slide-up cursor-default group" style={{ animationDelay: '0.15s' }}>
+            <p className="text-2xl font-bold bg-gradient-amber-glow bg-clip-text text-transparent animate-gradient-shift bg-[length:200%_200%] transition-transform duration-300 group-hover:scale-110">
               {allBooks.filter(b => b.status === 'completed').length}
             </p>
             <p className="text-sm text-muted-foreground">Completed</p>
@@ -160,14 +162,14 @@ const MyBooks = () => {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-col sm:flex-row gap-4 animate-fade-in">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-all duration-200 group-focus-within:text-primary group-focus-within:scale-110" />
             <Input
               placeholder="Search by title or author..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 transition-all duration-200 focus:shadow-glow focus:border-primary/50"
             />
           </div>
           <Select value={filterGenre} onValueChange={setFilterGenre}>
@@ -212,14 +214,19 @@ const MyBooks = () => {
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
-                {filteredBooks.map((book) => (
-                  <BookCard
+                {filteredBooks.map((book, index) => (
+                  <div
                     key={book.id}
-                    book={book}
-                    onFavoriteToggle={handleFavoriteToggle}
-                    onViewDetails={(id) => navigate(`/book/${id}`)}
-                    showProgress
-                  />
+                    className="animate-fade-in"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <BookCard
+                      book={book}
+                      onFavoriteToggle={handleFavoriteToggle}
+                      onViewDetails={(id) => navigate(`/book/${id}`)}
+                      showProgress
+                    />
+                  </div>
                 ))}
               </div>
             )}
