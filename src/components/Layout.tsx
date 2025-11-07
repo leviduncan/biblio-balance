@@ -1,9 +1,19 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Home, Library, Search, TrendingUp, Heart, LogOut, BookMarked, CheckCircle2, Star } from 'lucide-react';
+import { BookOpen, Home, Library, Search, TrendingUp, Heart, LogOut, BookMarked, CheckCircle2, Star, Settings, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { UserAvatar } from '@/components/UserAvatar';
+import { profileService } from '@/services/profileService';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,6 +23,15 @@ export function Layout({ children }: LayoutProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (user) {
+      profileService.getProfile(user.id)
+        .then(setProfile)
+        .catch(console.error);
+    }
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -44,15 +63,37 @@ export function Layout({ children }: LayoutProps) {
             </Link>
 
             {user && (
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-muted-foreground hidden sm:inline">
-                  {user.email}
-                </span>
-                <Button variant="outline" size="sm" onClick={handleSignOut}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
-                </Button>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full">
+                    <UserAvatar
+                      avatarUrl={profile?.avatar_url}
+                      username={profile?.username}
+                      email={user.email}
+                      size="md"
+                      className="cursor-pointer hover-lift transition-transform ring-2 ring-primary/20"
+                    />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col gap-1">
+                      <span className="font-medium">{profile?.username || 'User'}</span>
+                      <span className="text-xs text-muted-foreground font-normal">{user.email}</span>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    <User className="mr-2 h-4 w-4" />
+                    Profile Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>

@@ -25,24 +25,30 @@ export function BookCard({
   className,
 }: BookCardProps) {
   return (
-    <Card className={cn('overflow-hidden hover:shadow-warm transition-shadow', className)}>
+    <Card className={cn(
+      'group overflow-hidden transition-all duration-300 hover:shadow-lift hover:-translate-y-1',
+      'border-2 border-transparent hover:border-primary/20',
+      'animate-fade-in',
+      className
+    )}>
       <div className="flex gap-4 p-4">
         {/* Book Cover */}
         <div className="flex-shrink-0">
-          <div className="relative w-24 h-32 rounded-md overflow-hidden bg-muted">
+          <div className="relative w-24 h-32 rounded-md overflow-hidden bg-muted transform transition-transform duration-300 group-hover:scale-105 group-hover:rotate-1">
             {book.coverImage ? (
               <img
                 src={book.coverImage}
                 alt={book.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-hero">
-                <span className="text-4xl font-bold text-white">
+              <div className="w-full h-full flex items-center justify-center bg-gradient-amber-glow animate-gradient-shift bg-[length:200%_200%]">
+                <span className="text-4xl font-bold text-white transform transition-transform duration-300 group-hover:scale-110">
                   {book.title.charAt(0)}
                 </span>
               </div>
             )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
         </div>
 
@@ -53,7 +59,7 @@ export function BookCard({
               <h3 className="font-semibold text-lg truncate">{book.title}</h3>
               <p className="text-sm text-muted-foreground truncate">{book.author}</p>
               {book.genre && (
-                <span className="inline-block mt-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                <span className="inline-block mt-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full transition-all duration-300 hover:bg-primary/20 hover:scale-105 cursor-default">
                   {book.genre}
                 </span>
               )}
@@ -65,15 +71,24 @@ export function BookCard({
                   size="sm"
                   variant="ghost"
                   onClick={() => onFavoriteToggle(book.id, !book.isFavorite)}
+                  className="transition-all duration-200 hover:scale-110 active:scale-95"
                 >
                   <Heart
-                    className={cn('h-4 w-4', book.isFavorite && 'fill-destructive text-destructive')}
+                    className={cn(
+                      'h-4 w-4 transition-all duration-300',
+                      book.isFavorite && 'fill-destructive text-destructive animate-bounce-in'
+                    )}
                   />
                 </Button>
               )}
               {onViewDetails && (
-                <Button size="sm" variant="ghost" onClick={() => onViewDetails(book.id)}>
-                  <Eye className="h-4 w-4" />
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => onViewDetails(book.id)}
+                  className="transition-all duration-200 hover:scale-110 active:scale-95"
+                >
+                  <Eye className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
                 </Button>
               )}
             </div>
