@@ -178,10 +178,10 @@ export default function WantToRead() {
                 extraContent={
                   <Button
                     size="sm"
-                    className="w-full mt-2"
+                    className="w-full mt-2 whitespace-nowrap"
                     onClick={() => handleStartReading(book.id)}
                   >
-                    <PlayCircle className="h-4 w-4 mr-2" />
+                    <PlayCircle className="h-4 w-4 mr-2 flex-shrink-0" />
                     Start Reading
                   </Button>
                 }
