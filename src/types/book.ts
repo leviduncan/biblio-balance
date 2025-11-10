@@ -50,6 +50,7 @@ export interface ReadingChallenge {
   target: number;
   current: number;
   percentage?: number;
+  year: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -25,11 +25,44 @@ export const readingService = {
   },
 
   async getChallenge(userId: string): Promise<ReadingChallenge | null> {
+    const currentYear = new Date().getFullYear();
+    
+    // Try to get current year's challenge
     const { data, error } = await supabase
       .from('reading_challenges')
       .select('*')
       .eq('user_id', userId)
+      .eq('year', currentYear)
       .maybeSingle();
+
+    // If no challenge exists for current year, create one
+    if (!data && !error) {
+      const { data: newChallenge, error: createError } = await supabase
+        .from('reading_challenges')
+        .insert({
+          user_id: userId,
+          name: `${currentYear} Reading Challenge`,
+          target: 24,
+          current: 0,
+          year: currentYear,
+        })
+        .select()
+        .single();
+        
+      if (createError) throw createError;
+      
+      return newChallenge ? {
+        id: newChallenge.id,
+        userId: newChallenge.user_id,
+        name: newChallenge.name,
+        target: newChallenge.target,
+        current: newChallenge.current,
+        percentage: newChallenge.percentage,
+        year: newChallenge.year,
+        createdAt: newChallenge.created_at,
+        updatedAt: newChallenge.updated_at,
+      } : null;
+    }
 
     if (error) throw error;
     if (!data) return null;
@@ -41,6 +74,7 @@ export const readingService = {
       target: data.target,
       current: data.current,
       percentage: data.percentage,
+      year: data.year,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
