@@ -31,10 +31,10 @@ export function BookCard({
       'animate-fade-in',
       className
     )}>
-      <div className="flex gap-4 p-4">
+      <div className="flex flex-col p-4">
         {/* Book Cover */}
-        <div className="flex-shrink-0">
-          <div className="relative w-24 h-32 rounded-md overflow-hidden bg-muted transform transition-transform duration-300 group-hover:scale-105 group-hover:rotate-1">
+        <div className="w-full mb-4">
+          <div className="relative w-full aspect-[2/3] max-w-48 mx-auto rounded-md overflow-hidden bg-muted transform transition-transform duration-300 group-hover:scale-105 group-hover:rotate-1">
             {book.coverImage ? (
               <img
                 src={book.coverImage}
@@ -53,7 +53,7 @@ export function BookCard({
         </div>
 
         {/* Book Info */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-lg truncate">{book.title}</h3>
