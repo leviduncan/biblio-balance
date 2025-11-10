@@ -171,4 +171,19 @@ export const readingService = {
       value,
     }));
   },
+
+  async updateChallengeTarget(userId: string, newTarget: number): Promise<void> {
+    const currentYear = new Date().getFullYear();
+    
+    const { error } = await supabase
+      .from('reading_challenges')
+      .update({
+        target: newTarget,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+      .eq('year', currentYear);
+
+    if (error) throw error;
+  },
 };

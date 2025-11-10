@@ -9,9 +9,12 @@ import { Button } from '@/components/ui/button';
 import { bookService } from '@/services/bookService';
 import { readingService } from '@/services/readingService';
 import { Book, ReadingStats, ReadingChallenge } from '@/types/book';
-import { BookOpen, Clock, Flame, Star, ArrowRight } from 'lucide-react';
+import { BookOpen, Clock, Flame, Star, ArrowRight, Edit2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ProgressBar } from '@/components/ProgressBar';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -21,6 +24,8 @@ const Dashboard = () => {
   const [stats, setStats] = useState<ReadingStats | null>(null);
   const [challenge, setChallenge] = useState<ReadingChallenge | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditingChallenge, setIsEditingChallenge] = useState(false);
+  const [newTarget, setNewTarget] = useState(24);
 
   useEffect(() => {
     loadDashboardData();
@@ -62,6 +67,36 @@ const Dashboard = () => {
       toast({
         title: 'Error',
         description: 'Failed to update favorite status',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUpdateChallengeTarget = async () => {
+    if (!user || !challenge) return;
+    
+    if (newTarget < 1) {
+      toast({
+        title: 'Invalid target',
+        description: 'Target must be at least 1 book',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await readingService.updateChallengeTarget(user.id, newTarget);
+      setIsEditingChallenge(false);
+      await loadDashboardData();
+      toast({
+        title: 'Challenge updated!',
+        description: `Your target is now ${newTarget} books`,
+      });
+    } catch (error) {
+      console.error('Error updating challenge:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update challenge target',
         variant: 'destructive',
       });
     }
@@ -120,9 +155,22 @@ const Dashboard = () => {
                   {challenge.current} of {challenge.target} books completed
                 </p>
               </div>
-              <Button onClick={() => navigate('/reading-stats')}>
-                View Stats <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setNewTarget(challenge.target);
+                    setIsEditingChallenge(true);
+                  }}
+                >
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Edit Target
+                </Button>
+                <Button onClick={() => navigate('/reading-stats')}>
+                  View Stats <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
             </div>
             <ProgressBar value={challenge.current} max={challenge.target} />
           </div>
@@ -182,6 +230,45 @@ const Dashboard = () => {
             Browse My Library
           </Button>
         </div>
+
+        {/* Edit Challenge Dialog */}
+        <Dialog open={isEditingChallenge} onOpenChange={setIsEditingChallenge}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Reading Challenge</DialogTitle>
+              <DialogDescription>
+                Set your reading goal for {new Date().getFullYear()}. Choose a target that challenges you!
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="target">Target (books)</Label>
+                <Input
+                  id="target"
+                  type="number"
+                  min="1"
+                  value={newTarget}
+                  onChange={(e) => setNewTarget(parseInt(e.target.value) || 0)}
+                  placeholder="Enter your target"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Current progress: {challenge?.current || 0} books completed
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsEditingChallenge(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateChallengeTarget}>
+                Save Target
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
