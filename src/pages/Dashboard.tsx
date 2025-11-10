@@ -125,10 +125,10 @@ const Dashboard = () => {
                 </p>
               </div>
               <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => {
+              <Button variant="outline" onClick={() => {
               setNewTarget(challenge.target);
               setIsEditingChallenge(true);
-            }} className="p6 ">
+            }}>
                 <Edit2 className="h-4 w-4 mr-2" />
                 Edit Target
               </Button>
