@@ -119,7 +119,7 @@ const Dashboard = () => {
         {challenge && <div className="bg-card rounded-lg p-6 shadow-card">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-xl font-semibold">{challenge.name}</h2>
+                <h2 className="text-xl font-semibold">{challenge.year} Reading Challenge</h2>
                 <p className="text-sm text-muted-foreground">
                   {challenge.current} of {challenge.target} books completed
                 </p>
