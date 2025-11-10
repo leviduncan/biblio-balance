@@ -16,6 +16,7 @@ import WantToRead from "./pages/WantToRead";
 import Completed from "./pages/Completed";
 import Favorites from "./pages/Favorites";
 import ReadingStats from "./pages/ReadingStats";
+import BookDetail from "./pages/BookDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/completed" element={<ProtectedRoute><Completed /></ProtectedRoute>} />
             <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
             <Route path="/reading-stats" element={<ProtectedRoute><ReadingStats /></ProtectedRoute>} />
+            <Route path="/book/:id" element={<ProtectedRoute><BookDetail /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
