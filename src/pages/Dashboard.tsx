@@ -128,7 +128,7 @@ const Dashboard = () => {
               <Button variant="outline" size="sm" onClick={() => {
               setNewTarget(challenge.target);
               setIsEditingChallenge(true);
-            }} className="px-6 py-4 ">
+            }} className="p6 ">
                 <Edit2 className="h-4 w-4 mr-2" />
                 Edit Target
               </Button>
