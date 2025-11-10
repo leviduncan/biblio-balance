@@ -156,17 +156,18 @@ const Dashboard = () => {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    setNewTarget(challenge.target);
-                    setIsEditingChallenge(true);
-                  }}
-                >
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  Edit Target
-                </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="px-1 py-0.5"
+                onClick={() => {
+                  setNewTarget(challenge.target);
+                  setIsEditingChallenge(true);
+                }}
+              >
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit Target
+              </Button>
                 <Button onClick={() => navigate('/reading-stats')}>
                   View Stats <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
