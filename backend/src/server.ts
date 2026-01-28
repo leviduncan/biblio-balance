@@ -1,10 +1,10 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth';
-import bookRoutes from './routes/books';
-import profileRoutes from './routes/profiles';
-import readingStatsRoutes from './routes/reading-stats';
+import authRoutes from './routes/auth.js';
+import bookRoutes from './routes/books.js';
+import profileRoutes from './routes/profiles.js';
+import readingStatsRoutes from './routes/reading-stats.js';
 
 dotenv.config();
 
