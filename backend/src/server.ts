@@ -13,7 +13,14 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:8081', 'http://localhost:8082'], // Your Vite dev server
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:8080',
+        'http://localhost:8081',
+        'http://localhost:8082',
+        'https://booktracker.darrinduncan.com',
+        'https://www.booktracker.darrinduncan.com',
+    ],
     credentials: true,
 }));
 app.use(express.json());
