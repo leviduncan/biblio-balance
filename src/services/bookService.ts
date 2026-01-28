@@ -1,5 +1,15 @@
-import { supabase } from '@/integrations/supabase/client';
 import { Book } from '@/types/book';
+import { authService } from './authService';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+function getAuthHeaders(): HeadersInit {
+  const token = authService.getToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
 
 // Convert snake_case database response to camelCase frontend types
 const mapBookFromDb = (dbBook: any): Book => ({
@@ -24,158 +34,110 @@ const mapBookFromDb = (dbBook: any): Book => ({
 
 export const bookService = {
   async getAll(userId: string): Promise<Book[]> {
-    const { data, error } = await supabase
-      .from('books')
-      .select('*')
-      .eq('user_id', userId)
-      .order('last_updated', { ascending: false });
-
-    if (error) throw error;
+    const response = await fetch(`${API_BASE_URL}/books/user/${userId}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch books');
+    const data = await response.json();
     return (data || []).map(mapBookFromDb);
   },
 
   async getByStatus(userId: string, status: string): Promise<Book[]> {
-    const { data, error } = await supabase
-      .from('books')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('status', status)
-      .order('last_updated', { ascending: false });
-
-    if (error) throw error;
+    const response = await fetch(`${API_BASE_URL}/books/user/${userId}/status/${status}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch books');
+    const data = await response.json();
     return (data || []).map(mapBookFromDb);
   },
 
   async getFavorites(userId: string): Promise<Book[]> {
-    const { data, error } = await supabase
-      .from('books')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_favorite', true)
-      .order('last_updated', { ascending: false });
-
-    if (error) throw error;
+    const response = await fetch(`${API_BASE_URL}/books/user/${userId}/favorites`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch favorites');
+    const data = await response.json();
     return (data || []).map(mapBookFromDb);
   },
 
   async getById(id: string): Promise<Book | null> {
-    const { data, error } = await supabase
-      .from('books')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-
-    if (error) throw error;
-    return data ? mapBookFromDb(data) : null;
+    const response = await fetch(`${API_BASE_URL}/books/${id}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return mapBookFromDb(data);
   },
 
   async create(book: Partial<Book>, userId: string): Promise<Book> {
-    const { data, error } = await supabase
-      .from('books')
-      .insert({
-        user_id: userId,
+    const response = await fetch(`${API_BASE_URL}/books`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        userId,
         title: book.title,
         author: book.author,
-        cover_image: book.coverImage,
+        coverImage: book.coverImage,
         description: book.description,
         genre: book.genre,
-        page_count: book.pageCount,
-        current_page: book.currentPage || 0,
+        pageCount: book.pageCount,
+        currentPage: book.currentPage || 0,
         status: book.status || 'want-to-read',
-        is_favorite: book.isFavorite || false,
+        isFavorite: book.isFavorite || false,
         rating: book.rating,
-      })
-      .select()
-      .single();
+      }),
+    });
 
-    if (error) throw error;
+    if (!response.ok) throw new Error('Failed to create book');
+    const data = await response.json();
     return mapBookFromDb(data);
   },
 
   async update(id: string, updates: Partial<Book>): Promise<Book> {
-    const dbUpdates: any = {};
-    
-    if (updates.title !== undefined) dbUpdates.title = updates.title;
-    if (updates.author !== undefined) dbUpdates.author = updates.author;
-    if (updates.coverImage !== undefined) dbUpdates.cover_image = updates.coverImage;
-    if (updates.description !== undefined) dbUpdates.description = updates.description;
-    if (updates.genre !== undefined) dbUpdates.genre = updates.genre;
-    if (updates.pageCount !== undefined) dbUpdates.page_count = updates.pageCount;
-    if (updates.currentPage !== undefined) dbUpdates.current_page = updates.currentPage;
-    if (updates.startedReading !== undefined) dbUpdates.started_reading = updates.startedReading;
-    if (updates.finishedReading !== undefined) dbUpdates.finished_reading = updates.finishedReading;
-    if (updates.rating !== undefined) dbUpdates.rating = updates.rating;
-    if (updates.status !== undefined) dbUpdates.status = updates.status;
-    if (updates.isFavorite !== undefined) dbUpdates.is_favorite = updates.isFavorite;
+    const response = await fetch(`${API_BASE_URL}/books/${id}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(updates),
+    });
 
-    const { data, error } = await supabase
-      .from('books')
-      .update(dbUpdates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
+    if (!response.ok) throw new Error('Failed to update book');
+    const data = await response.json();
     return mapBookFromDb(data);
   },
 
   async updateProgress(id: string, currentPage: number, pageCount: number): Promise<Book> {
-    const updates: any = { current_page: currentPage };
-    
+    const updates: any = { currentPage };
+
     // Auto-set started reading date if not set
     const book = await this.getById(id);
     if (book && !book.startedReading && currentPage > 0) {
-      updates.started_reading = new Date().toISOString();
+      updates.startedReading = new Date().toISOString();
     }
 
     // Auto-complete book when reaching last page
     if (currentPage >= pageCount && book?.status !== 'completed') {
       updates.status = 'completed';
-      updates.finished_reading = new Date().toISOString();
+      updates.finishedReading = new Date().toISOString();
     }
 
-    const { data, error } = await supabase
-      .from('books')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return mapBookFromDb(data);
+    return this.update(id, updates);
   },
 
   async toggleFavorite(id: string, isFavorite: boolean): Promise<Book> {
-    const { data, error } = await supabase
-      .from('books')
-      .update({ is_favorite: isFavorite })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return mapBookFromDb(data);
+    return this.update(id, { isFavorite });
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('books')
-      .delete()
-      .eq('id', id);
+    const response = await fetch(`${API_BASE_URL}/books/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
 
-    if (error) throw error;
+    if (!response.ok) throw new Error('Failed to delete book');
   },
 
   async checkIfBookExists(userId: string, title: string, author: string): Promise<boolean> {
-    const { data, error } = await supabase
-      .from('books')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('title', title)
-      .eq('author', author)
-      .maybeSingle();
-
-    if (error) throw error;
-    return !!data;
+    const books = await this.getAll(userId);
+    return books.some(b => b.title === title && b.author === author);
   },
 };

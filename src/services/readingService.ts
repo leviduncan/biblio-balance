@@ -1,189 +1,212 @@
-import { supabase } from '@/integrations/supabase/client';
 import { ReadingStats, ReadingChallenge } from '@/types/book';
+import { bookService } from './bookService';
+import { authService } from './authService';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+function getAuthHeaders(): HeadersInit {
+  const token = authService.getToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
 
 export const readingService = {
   async getStats(userId: string): Promise<ReadingStats | null> {
-    const { data, error } = await supabase
-      .from('reading_stats')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
+    try {
+      const response = await fetch(`${API_BASE_URL}/reading-stats/user/${userId}`, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) return null;
 
-    if (error) throw error;
-    if (!data) return null;
-
-    return {
-      id: data.id,
-      userId: data.user_id,
-      booksRead: data.books_read,
-      totalPages: data.total_pages,
-      readingTime: data.reading_time,
-      currentStreak: data.current_streak,
-      averageRating: data.average_rating,
-      lastUpdated: data.last_updated,
-    };
+      const data = await response.json();
+      return {
+        id: data.id,
+        userId: data.user_id,
+        booksRead: data.books_read,
+        totalPages: data.total_pages,
+        readingTime: data.reading_time,
+        currentStreak: data.current_streak,
+        averageRating: data.average_rating,
+        lastUpdated: data.last_updated,
+      };
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      return null;
+    }
   },
 
   async getChallenge(userId: string): Promise<ReadingChallenge | null> {
-    const currentYear = new Date().getFullYear();
-    
-    // Try to get current year's challenge
-    const { data, error } = await supabase
-      .from('reading_challenges')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('year', currentYear)
-      .maybeSingle();
+    try {
+      const response = await fetch(`${API_BASE_URL}/reading-stats/challenges/${userId}`, {
+        headers: getAuthHeaders(),
+      });
 
-    // If no challenge exists for current year, create one
-    if (!data && !error) {
-      const { data: newChallenge, error: createError } = await supabase
-        .from('reading_challenges')
-        .insert({
-          user_id: userId,
-          name: `${currentYear} Reading Challenge`,
-          target: 24,
-          current: 0,
-          year: currentYear,
-        })
-        .select()
-        .single();
-        
-      if (createError) throw createError;
-      
-      return newChallenge ? {
-        id: newChallenge.id,
-        userId: newChallenge.user_id,
-        name: newChallenge.name,
-        target: newChallenge.target,
-        current: newChallenge.current,
-        percentage: newChallenge.percentage,
-        year: newChallenge.year,
-        createdAt: newChallenge.created_at,
-        updatedAt: newChallenge.updated_at,
-      } : null;
+      if (response.status === 404) {
+        // Create a new challenge for this year
+        const currentYear = new Date().getFullYear();
+        return this.createChallenge(userId, `${currentYear} Reading Challenge`, 24, currentYear);
+      }
+
+      if (!response.ok) throw new Error('Failed to fetch challenge');
+
+      const data = await response.json();
+      return {
+        id: data.id,
+        userId: data.user_id,
+        name: data.name,
+        target: data.target,
+        current: data.current,
+        percentage: data.percentage,
+        year: data.year,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+      };
+    } catch (error) {
+      console.error('Error fetching challenge:', error);
+      return null;
     }
+  },
 
-    if (error) throw error;
-    if (!data) return null;
+  async createChallenge(userId: string, name: string, target: number, year: number): Promise<ReadingChallenge | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/reading-stats/challenges`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ userId, name, target, year }),
+      });
 
-    return {
-      id: data.id,
-      userId: data.user_id,
-      name: data.name,
-      target: data.target,
-      current: data.current,
-      percentage: data.percentage,
-      year: data.year,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-    };
+      if (!response.ok) throw new Error('Failed to create challenge');
+
+      const data = await response.json();
+      return {
+        id: data.id,
+        userId: data.user_id,
+        name: data.name,
+        target: data.target,
+        current: data.current,
+        percentage: data.percentage,
+        year: data.year,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+      };
+    } catch (error) {
+      console.error('Error creating challenge:', error);
+      return null;
+    }
   },
 
   async updateStats(userId: string): Promise<void> {
-    // Get all completed books
-    const { data: books, error: booksError } = await supabase
-      .from('books')
-      .select('page_count, rating')
-      .eq('user_id', userId)
-      .eq('status', 'completed');
+    try {
+      // Get all completed books using bookService
+      const allBooks = await bookService.getAll(userId);
+      const books = allBooks.filter(b => b.status === 'completed');
 
-    if (booksError) throw booksError;
+      const booksRead = books.length;
+      const totalPages = books.reduce((sum, book) => sum + (book.pageCount || 0), 0);
+      const ratingsSum = books.filter(b => b.rating).reduce((sum, book) => sum + (book.rating || 0), 0);
+      const ratingsCount = books.filter(b => b.rating).length;
+      const averageRating = ratingsCount > 0 ? ratingsSum / ratingsCount : 0;
 
-    const booksRead = books?.length || 0;
-    const totalPages = books?.reduce((sum, book) => sum + (book.page_count || 0), 0) || 0;
-    const ratingsSum = books?.filter(b => b.rating).reduce((sum, book) => sum + (book.rating || 0), 0) || 0;
-    const ratingsCount = books?.filter(b => b.rating).length || 0;
-    const averageRating = ratingsCount > 0 ? ratingsSum / ratingsCount : 0;
+      // Update stats
+      await fetch(`${API_BASE_URL}/reading-stats/user/${userId}`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          booksRead,
+          totalPages,
+          averageRating,
+        }),
+      });
 
-    // Update stats
-    const { error: updateError } = await supabase
-      .from('reading_stats')
-      .update({
-        books_read: booksRead,
-        total_pages: totalPages,
-        average_rating: averageRating,
-        last_updated: new Date().toISOString(),
-      })
-      .eq('user_id', userId);
+      // Update challenge current count
+      const response = await fetch(`${API_BASE_URL}/reading-stats/challenges/${userId}`, {
+        headers: getAuthHeaders(),
+      });
+      if (response.ok) {
+        const challenge = await response.json();
+        const percentage = challenge.target > 0 ? (booksRead / challenge.target) * 100 : 0;
 
-    if (updateError) throw updateError;
-
-    // Update challenge current count
-    const { error: challengeError } = await supabase
-      .from('reading_challenges')
-      .update({
-        current: booksRead,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', userId);
-
-    if (challengeError) throw challengeError;
+        await fetch(`${API_BASE_URL}/reading-stats/challenges/${challenge.id}`, {
+          method: 'PATCH',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            current: booksRead,
+            percentage: Math.min(100, percentage),
+          }),
+        }).catch(() => { });
+      }
+    } catch (error) {
+      console.error('Error updating stats:', error);
+    }
   },
 
   async calculateMonthlyStats(userId: string, year: number) {
-    const { data: books, error } = await supabase
-      .from('books')
-      .select('finished_reading, page_count')
-      .eq('user_id', userId)
-      .eq('status', 'completed')
-      .not('finished_reading', 'is', null);
+    try {
+      const allBooks = await bookService.getAll(userId);
+      const books = allBooks.filter(b => b.status === 'completed' && b.finishedReading);
 
-    if (error) throw error;
+      const monthlyStats = Array(12).fill(0).map((_, i) => ({
+        month: new Date(year, i).toLocaleString('default', { month: 'short' }),
+        books: 0,
+        pages: 0,
+      }));
 
-    const monthlyStats = Array(12).fill(0).map((_, i) => ({
-      month: new Date(year, i).toLocaleString('default', { month: 'short' }),
-      books: 0,
-      pages: 0,
-    }));
+      books.forEach(book => {
+        const finishedDate = new Date(book.finishedReading!);
+        if (finishedDate.getFullYear() === year) {
+          const month = finishedDate.getMonth();
+          monthlyStats[month].books += 1;
+          monthlyStats[month].pages += book.pageCount || 0;
+        }
+      });
 
-    books?.forEach(book => {
-      const finishedDate = new Date(book.finished_reading!);
-      if (finishedDate.getFullYear() === year) {
-        const month = finishedDate.getMonth();
-        monthlyStats[month].books += 1;
-        monthlyStats[month].pages += book.page_count || 0;
-      }
-    });
-
-    return monthlyStats;
+      return monthlyStats;
+    } catch (error) {
+      console.error('Error calculating monthly stats:', error);
+      return Array(12).fill(0).map((_, i) => ({
+        month: new Date(year, i).toLocaleString('default', { month: 'short' }),
+        books: 0,
+        pages: 0,
+      }));
+    }
   },
 
   async getGenreDistribution(userId: string) {
-    const { data: books, error } = await supabase
-      .from('books')
-      .select('genre')
-      .eq('user_id', userId)
-      .eq('status', 'completed')
-      .not('genre', 'is', null);
+    try {
+      const allBooks = await bookService.getAll(userId);
+      const books = allBooks.filter(b => b.status === 'completed' && b.genre);
 
-    if (error) throw error;
+      const genreCounts: Record<string, number> = {};
+      books.forEach(book => {
+        if (book.genre) {
+          genreCounts[book.genre] = (genreCounts[book.genre] || 0) + 1;
+        }
+      });
 
-    const genreCounts: Record<string, number> = {};
-    books?.forEach(book => {
-      if (book.genre) {
-        genreCounts[book.genre] = (genreCounts[book.genre] || 0) + 1;
-      }
-    });
-
-    return Object.entries(genreCounts).map(([name, value]) => ({
-      name,
-      value,
-    }));
+      return Object.entries(genreCounts).map(([name, value]) => ({
+        name,
+        value,
+      }));
+    } catch (error) {
+      console.error('Error getting genre distribution:', error);
+      return [];
+    }
   },
 
   async updateChallengeTarget(userId: string, newTarget: number): Promise<void> {
-    const currentYear = new Date().getFullYear();
-    
-    const { error } = await supabase
-      .from('reading_challenges')
-      .update({
-        target: newTarget,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', userId)
-      .eq('year', currentYear);
+    try {
+      const challenge = await this.getChallenge(userId);
+      if (!challenge) throw new Error('Challenge not found');
 
-    if (error) throw error;
+      await fetch(`${API_BASE_URL}/reading-stats/challenges/${challenge.id}`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ target: newTarget }),
+      });
+    } catch (error) {
+      console.error('Error updating challenge target:', error);
+    }
   },
 };

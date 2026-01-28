@@ -1,12 +1,12 @@
-name: Deploy Vite Site via SFTP
+name: Deploy BookTracker (Frontend + Backend)
 
 on:
   push:
     branches:
-      - main  # Change if needed
+      - main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,15 +16,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
-      - name: Install dependencies
+      # Frontend Build
+      - name: Install frontend dependencies
         run: npm ci
 
-      - name: Build Vite site
+      - name: Build frontend
         run: npm run build
 
-      - name: Deploy via SFTP
+      # Deploy Frontend
+      - name: Deploy frontend via SFTP
         uses: appleboy/scp-action@v0.1.6
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -33,8 +35,22 @@ jobs:
           port: 22
           source: "dist/*"
           target: "/srv/booktracker"
+          strip_components: 1
 
-      - name: Reload Caddy
+      # Deploy Backend
+      - name: Deploy backend via SFTP
+        uses: appleboy/scp-action@v0.1.6
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          source: "backend/*"
+          target: "/opt/booktracker-api"
+          strip_components: 1
+
+      # Build and restart backend on server
+      - name: Build and restart backend
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -42,5 +58,17 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           script: |
+            cd /opt/booktracker-api
+            docker build -t booktracker-api .
+            docker stop booktracker-api || true
+            docker rm booktracker-api || true
+            docker run -d \
+              --name booktracker-api \
+              --restart unless-stopped \
+              -p 3001:3001 \
+              --network host \
+              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              -e NODE_ENV=production \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              booktracker-api
             sudo systemctl reload caddy
-
