@@ -24,11 +24,11 @@ export const readingService = {
       return {
         id: data.id,
         userId: data.user_id,
-        booksRead: data.books_read,
-        totalPages: data.total_pages,
-        readingTime: data.reading_time,
-        currentStreak: data.current_streak,
-        averageRating: data.average_rating,
+        booksRead: data.books_read || 0,
+        totalPages: data.total_pages || 0,
+        readingTime: data.reading_time || 0,
+        currentStreak: data.current_streak || 0,
+        averageRating: parseFloat(data.average_rating) || 0,
         lastUpdated: data.last_updated,
       };
     } catch (error) {
