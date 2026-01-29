@@ -5,6 +5,7 @@ A full-stack reading tracker that helps you organize your library, track reading
 **[Live Demo](https://booktracker.darrinduncan.com)** | **[Portfolio](https://darrinduncan.com)**
 
 ![Book Tracker Dashboard](./screenshot.png)
+![Book Tracker Stats](./screenshot2.png)
 
 ---
 
